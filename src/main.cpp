@@ -87,6 +87,14 @@ decoded decode_inst_line(const char * buffer)
     return inst;
 }
 
+byte empty_byte()
+{
+    byte b;
+    b.addr=0;
+    b.val=0;
+    return b;
+}
+
 class RAM_Module
 {
 private:
@@ -196,16 +204,6 @@ public:
             }
     }
 
-    int *empty_line()
-    {
-        int *arr=(int*)malloc(SIZE_LINE*sizeof(int));
-        for (int i = 0; i < SIZE_LINE; ++i)
-        {
-            *(arr+i)=0;
-        }
-        return arr;
-    }
-
     void print_block(int n)
     {
         int ini=n*this->block_size;
@@ -226,6 +224,24 @@ public:
     CPU_unit(RAM_Module r)
     {
         this->ram=r;
+    }
+
+    void init_caches()
+    {
+        for (int j = 0; j < NUM_CORES; ++j)
+        {
+            block cache=caches[j];
+            for (int i = 0; i < NUM_LINES; ++i)
+            {
+                line l=cache.lines[i];
+                l.line_state=invalid;
+                for (int k = 0; k < SIZE_LINE; ++k)
+                {
+                    byte b=empty_byte();
+                    l.bytes[i]=b;
+                }
+            }
+        }
     }
 
     void print_all_caches()
@@ -406,11 +422,7 @@ int main(int argc, char const *argv[])
 {
     RAM_Module r1(NUM_BLOCKS,SIZE_BLOCK);
     r1.init();
-    // r1.populate();
-    // CACHE_block c1(NUM_LINES,SIZE_LINE);
-    // c1.init();
-    // int k=rand()%NUM_BLOCKS;
-    // c1.read_Block(k,r1);
+    r1.populate();
     CPU_unit cpu1(r1);
     std::string files[NUM_CORES]={
         "..//inputs//input_0.txt",
